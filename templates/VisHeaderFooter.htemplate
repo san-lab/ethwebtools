@@ -1,0 +1,57 @@
+{{define "visheader"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Integer Partition ZK Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css">
+    <script
+            type="text/javascript"
+            src="/static/vis-network.min.js"
+    ></script>
+      <style>
+    /* Custom modal styles */
+  
+
+    /* Close button styles */
+    .close {
+      color: #333;
+      float: right;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<table><tr>
+    <td>
+        <table border="0" >
+            <tr>
+                <td rowspan="3"><img src="/static/blockchain_64x64.png" align="left"/></td>
+                <td colspan="3"><b>Ethereum Address Tool</td>
+
+            </tr>
+            
+          
+        </table>
+    </td>
+    <td>
+        
+    </td>
+</tr>
+</table>
+
+
+
+
+    <hr/>
+{{end}}
+
+{{define "visfooter"}}
+<hr/>
+Santander Blockchain Center of Excellence
+
+</body>
+</html>
+        {{end}}

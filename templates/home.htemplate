@@ -1,0 +1,19 @@
+{{define "home"}}
+{{template "header" .HeaderData}}
+
+<style type="text/css">
+.red {
+    color: red;
+}
+</style>
+{{with .Error}}Error: {{.}}{{end}}
+{{with .BodyData}}{{.}}{{end}}
+<ul>
+<li><a href="./create">Calculate smart contract address - CREATE</a></li>
+<li><a href="./create2">Calculate smart contract address - CREATE2</a></li>
+<li><a href="./merkledemo">Merkle Tree Demo</a></li>
+</ul>
+
+
+{{template "footer" .FooterData}}
+{{end}}

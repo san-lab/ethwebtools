@@ -1,0 +1,298 @@
+{{define "merkledemo"}}
+{{template "visheader" .HeaderData}}
+        {{with .Error}}Error: {{.}}{{end}}
+
+<style type="text/css">
+  #editModal {
+      display: none;
+      position: fixed;
+      top: 20%;
+      left: 20%;
+      transform: translate(-50%, -50%);
+      background-color: #f1f1f1;
+      padding: 20px;
+      border: 1px solid #ddd;
+      z-index: 3;
+    }
+
+#container {
+      width: 1800px;
+      height: 720px;
+      border: 2px solid lightgray;
+      position: relative;
+      
+    }
+
+ #legend {
+       position: absolute;
+       left: 20px;
+       bottom: 150px;
+       background-color: #E0E0E0;
+      z-index: 2;
+      padding-left: 10px;
+      padding-right: 10px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+
+  #graph {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 1780px;
+      height: 700px;
+
+      z-index: 1;
+    }
+
+
+</style>
+
+{{template "emodal" .}}
+{{template "sha256" .}}
+
+
+<div>
+   <form action="/merkledemo" method="post"> 
+  <table  >
+  <tr>
+    <td><input type="Submit" value="Rebuild" /></td>
+    <td width=200px valign="top">Balance propagation strategy:</td><td>
+    {{with .BodyData}}
+      {{with .Strategy}}
+    <select name="strategy">
+      <option value="Sum"  {{if eq . "Sum"}}selected{{end}}>Sum</option>
+      <option value="Max"  {{if eq . "Max"}}selected{{end}}>Max</option>
+      <option value="Both" {{if eq . "Both"}}selected{{end}}>Both</option>
+      <option value="None" {{if eq . "None"}}selected{{end}}>None</option>
+    </select>
+      {{end}}
+    {{end}}
+    </td>
+
+    <td>Branch count: <input type="Text" name="branchcount" value={{with .BodyData}}{{.Branchcount}}{{end}}></input></td>
+  </tr>
+</table>
+</div>
+
+
+<hr/>
+  <div id="container">
+        <div id="legend"> 
+        {{with .BodyData}}
+           {{with .DisplayTree}}
+               Hashing strategy: <br/><br/>
+             <em> <code> <font size="+2"> {{.StrategyString}} </font> </code></em>
+            {{end}}
+        {{end}}
+     </div>
+      <div id="graph">
+      </div>
+          
+</div>
+<div id="footer">
+<table>
+    <tr>
+      <td valign="top">Merkle Tree:</td><td>
+      {{with .BodyData}}{{with .DisplayTree}}
+          {{.NiceRoot}}
+      {{end}}{{end}}
+      </td>
+    </tr>
+</table>
+</div>
+
+</form>
+
+  
+
+{{with .BodyData}}{{with .DisplayTree}}
+<script type="text/javascript">
+// create an array with nodes
+var nodes = new vis.DataSet(
+  {{.VisNet.Nodes}}
+);
+
+// create an array with edges
+var edges = new vis.DataSet(
+{{.VisNet.Edges}}
+);
+
+// create a network
+var container = document.getElementById("graph");
+var data = {
+  nodes: nodes,
+  edges: edges,
+};
+var options2 = {
+        physics: {enabled: false},
+        layout: {
+            randomSeed: 0,
+            improvedLayout:true,
+            clusterThreshold: 150,
+            hierarchical: {
+                enabled:true,
+                levelSeparation: 150,
+                nodeSpacing: 150,
+                treeSpacing: 200,
+                blockShifting: true,
+                edgeMinimization: true,
+                parentCentralization: true,
+                direction: 'DU',        // UD, DU, LR, RL
+                sortMethod: 'hubsize',  // hubsize, directed
+                shakeTowards: 'leaves'  // roots, leaves
+            }
+        },
+        edges: {arrows:'to'},
+        nodes: {
+    shape: "box",
+    size: "20",
+  },
+};
+
+var options = {
+  layout: {
+    hierarchical: {
+      direction: "UD",
+      sortMethod: "directed",
+    },
+  },
+  edges: {
+    arrows: "to",
+  },
+   nodes: {
+    shape: "box",
+    font: {
+        // required: enables displaying <b>text</b> in the label as bold text
+        multi: 'html',
+        // optional: use this if you want to specify the font of bold text
+        //bold: '16px arial black'
+    }
+
+  },
+ 
+};
+
+var network = new vis.Network(container, data, options);
+
+ // Event listener for double-click on a node
+    network.on('doubleClick', (event) => {
+      const nodeId = event.nodes[0];
+      if (nodeId !== undefined) {
+        openEditModal(nodeId);
+      }
+    });
+
+    network.on('click', (event) => {
+      const nodeId = event.nodes[0];
+      if (nodeId !== undefined) {
+        const node = nodes.get(nodeId)
+        console.log("Claimed hash: "+ node.hash)
+        data.edges.forEach(edge => {
+            if(edge.to === nodeId && data.nodes.get(edge.from)){
+              console.log(edge.from)
+           }
+        });
+        var tohash; 
+        if (node.isLeaf) {
+          tohash = encoder.encode( node.userId + node.balance);
+        } else {
+            console.log({{.BalanceStrategy}})
+            switch({{.BalanceStrategy}}) {
+              case "Sum":
+                console.log(1);
+                var sum = 0;
+                var hash = "";
+                data.edges.forEach(edge => {
+                   if(edge.to === nodeId && data.nodes.get(edge.from)){
+                     sum += nodes.get(edge.from).balance;
+                     hash = concatenateArrays(hash, hexToBytes(nodes.get(edge.from).hash));
+                   }
+                 });
+                tohash =  concatenateArrays(hash, encode(sum));
+                break;
+              case "None":
+                console.log(0);
+                break;
+              case "Max":
+                console.log(2);
+                break;
+              default:
+                console.log("Unknown");
+            }
+        }
+        sha256(tohash)
+           .then(hash => {
+             console.log('SHA-256 hash:', hash);
+            })
+           .catch(error => {
+             console.error('Error calculating hash:', error);
+            });
+      }
+     
+      
+    });
+
+
+network.on("selectNode", function (params) {
+  var selectedNodeId = params.nodes[0];
+  var node = network.body.nodes[selectedNodeId];
+  node.setOptions({
+    font: {
+      //size: 20,
+      color: "#ff0000"
+    }
+  });
+});
+
+network.on("deselectNode", function (params) {
+  var deselectedNodeId = params.previousSelection.nodes[0];
+  var node = network.body.nodes[deselectedNodeId];
+  node.setOptions({
+    font: {
+      size: options.nodes.font.size,
+      color: options.nodes.font.color
+    }
+  });
+});
+
+
+    // Function to open the edit modal
+    function openEditModal(nodeId) {
+      const node = nodes.get(nodeId);
+      if (!node.isLeaf) {
+        return;
+      }
+      document.getElementById('newUserId').value = node.userId;
+       document.getElementById('newBalance').value = node.balance;
+       document.getElementById('changeleafid').value = nodeId;
+      document.getElementById('editModal').style.display = 'block';
+      
+    }
+
+    // Function to close the edit modal
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    // Function to save the new label and update the node
+    function saveNewLabel() {
+      const nodeId = network.getSelectedNodes()[0];
+      var newLabel = document.getElementById('newUserId').value;
+      newLabel += ': ';
+      newLabel += document.getElementById('newBalance').value;
+      newLabel += '\n';
+
+      if (nodeId !== undefined) {
+        nodes.update({ id: nodeId, label: newLabel });
+        closeEditModal();
+      }
+    }
+
+
+
+</script>
+{{end}}{{end}}
+{{template "footer" .}}
+{{end}}

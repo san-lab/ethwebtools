@@ -1,0 +1,36 @@
+{{define "create"}}
+{{template "header" .HeaderData}}
+
+<form action="/create" method="get" >
+<table border=0>
+<tr>
+    <td>Deployer Address</td>
+    <td ><input type="text" size="50" value="{{.BodyData.Address}}" name="address" /></td>
+</tr>
+<tr>
+    <td>Nonce</td>
+    <td><input type="text" size="50" value="{{.BodyData.Nonce}}" name="nonce" /></td>
+</tr>
+<tr>
+    <td>Contract Address</td>
+    <td>{{.BodyData.CAddress}}</td>
+</tr>
+
+
+</table>
+<td><input type="submit" value="Calculate" name="action" /> </td>
+</form>
+<p/>
+<code>
+<ul>
+{{range $adr, $nonce := .BodyData.Nonces}}
+<li><a href="https://holesky.etherscan.io/address/{{$adr}}" target="_blank" rel="noopener noreferrer" >
+{{$adr}}  </a>  (corrent nonce:{{$nonce}})</li>
+{{end}}
+
+</ul>
+</code>
+A sample contract to fetch the balance is <a href="/static/fetcher.sol" target="_blank" rel="noopener noreferrer" >here<a>
+
+{{template "footer" .FooterData}}
+{{end}}

@@ -1,0 +1,60 @@
+{{define "header"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+  
+    <title>Ethereum Address Tool</title>
+ 
+<style type="text/css">
+    td{
+        padding: 0px;
+    }
+    tr{
+        padding: 1px;
+    }
+</style>
+</head>
+<body>
+<table><tr>
+    <td>
+        <table border="0" >
+            <tr>
+                <td rowspan="3"><img src="/static/blockchain_64x64.png" align="left"/></td>
+                <td colspan="3"><b>Ethereum Address Tool</td>
+
+            </tr>
+            
+          
+        </table>
+    </td>
+    <td>
+        
+    </td>
+</tr>
+</table>
+
+
+
+
+    <hr/>
+{{end}}
+
+{{define "footer"}}
+<hr/>
+{{template "rtemplates" .}}
+</body>
+</html>
+{{end}}
+
+
+
+
+
+
+
+{{define "rtemplates"}}
+    <form action="/loadtemplates" type="POST">
+    <button type="submit" >reload templates</button>
+    </form>
+{{end}}

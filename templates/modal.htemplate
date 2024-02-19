@@ -1,0 +1,20 @@
+{{define "emodal"}}
+<!-- Custom modal for editing a leaf node -->
+  <div id="editModal">
+    <form action="/merkledemo" method="post">
+    <span class="close" onclick="closeEditModal()">&times;</span>
+    
+    <label for="newLabel">New Values:</label>
+    <table>
+    <tr>
+     <td>User:</td><td><input type="text" id="newUserId" name="newUserId"></td>
+    </tr>
+    <tr>
+      <td>Balance:</td><td><input type="text" id="newBalance" name="newBalance"></td>
+    </tr>
+    </table>
+    <input type="Submit" value="Change" name="action"/>
+     <input type="hidden" id="changeleafid" name="leafid" >
+    </form>
+  </div>
+  {{end}}

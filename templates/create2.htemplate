@@ -1,0 +1,30 @@
+{{define "create2"}}
+{{template "header" .HeaderData}}
+
+<form action="/create2" method="get" >
+<table border=0>
+<tr>
+    <td>Deployer Address</td>
+    <td ><input type="text" size="90" value="{{.BodyData.Address}}" name="address" /></td>
+</tr>
+<tr>
+    <td>Code Hash</td>
+    <td ><input type="text" size="90" value="{{.BodyData.Codehash}}" name="codehash" /></td>
+</tr>
+<tr>
+    <td>Salt</td>
+    <td ><input type="text" size="90" value="{{.BodyData.Salt}}" name="salt" /></td>
+</tr>
+<tr>
+    <td>Contract Address</td>
+    <td>{{.BodyData.CAddress}}</td>
+</tr>
+
+
+</table>
+<td><input type="submit" value="Calculate" name="action" /> </td>
+</form>
+
+
+{{template "footer" .FooterData}}
+{{end}}
