@@ -17,4 +17,39 @@
      <input type="hidden" id="changeleafid" name="leafid" >
     </form>
   </div>
+
+<script>
+// Function to save the new label and update the node
+      function saveNewLabel() {
+      const nodeId = network.getSelectedNodes()[0];
+      var newLabel = document.getElementById('newUserId').value;
+      newLabel += ': ';
+      newLabel += document.getElementById('newBalance').value;
+      newLabel += '\n';
+
+      if (nodeId !== undefined) {
+        nodes.update({ id: nodeId, label: newLabel });
+        closeEditModal();
+      }
+    }
+
+    function openEditModal(nodeId) {
+      const node = nodes.get(nodeId);
+      if (!node.isLeaf) {
+        return;
+      }
+      document.getElementById('newUserId').value = node.userId;
+       document.getElementById('newBalance').value = node.balance;
+       document.getElementById('changeleafid').value = nodeId;
+      document.getElementById('editModal').style.display = 'block';
+      
+    }
+
+    // Function to close the edit modal
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+</script>
+
   {{end}}

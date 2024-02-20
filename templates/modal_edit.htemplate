@@ -1,0 +1,62 @@
+{{define "emodal_edit"}}
+<!-- Custom modal for editing a leaf node -->
+  <div id="editModal">
+    
+    <span class="close" onclick="closeEditModal()">&times;</span>
+    
+    <label for="newLabel">New Values:</label>
+    <table>
+    <tr>
+     <td>User:</td><td><input type="text" id="newUserId" name="newUserId"></td>
+    </tr>
+    <tr>
+      <td>Balance:</td><td><input type="text" id="newBalance" name="newBalance"></td>
+    </tr>
+    </table>
+          
+     <button onclick="update()">Save</button>
+    
+  </div>
+<script >
+// Function to save the new label and update the node
+    function update() {
+      const nodeId = network.getSelectedNodes()[0];
+      const newUserId = document.getElementById('newUserId').value;
+      const newBalance = document.getElementById('newBalance').value;
+      let nlabel = "";
+      if (newUserId !== null && newUserId.length > 0) {
+          
+        nlabel += newUserId+`: `;
+      }
+      nlabel += `<b>$`+newBalance+`</b>\n`;
+      nlabel += shortenHash( nodes.get(nodeId).hash);
+
+
+      
+      if (nodeId !== undefined) {
+        const label = newUserId
+         nodes.update({ id: nodeId, label: nlabel , balance: newBalance, userId: newUserId});
+         
+         closeEditModal();
+      }
+    }
+
+    // Function to close the edit modal
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+
+    function openEditModal(nodeId) {
+      hideModal();
+      const node = nodes.get(nodeId);
+       document.getElementById('newUserId').value = node.userId;
+       document.getElementById('newBalance').value = node.balance;
+       document.getElementById('editModal').style.display = 'block';
+      
+    }
+
+
+</script>
+
+  {{end}}

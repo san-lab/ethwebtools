@@ -263,10 +263,11 @@ func (tr *Tree) GetProof(leafID string) (*Tree, error) {
 	}
 
 	proof := new(Tree)
+	proof.BalanceStrategy = tr.BalanceStrategy
 	provednode := tr.Leaves[leafIdx]
 
 	shadownode := tr.cloneProofNode(provednode)
-
+	shadownode.Data.NodeID = provednode.Data.NodeID
 	shadownode.isLeaf = true
 
 	root := tr.TracePathToRoot(provednode, shadownode)
@@ -285,7 +286,8 @@ func (tr *Tree) TracePathToRoot(org *Node, cp *Node) *Node {
 		return cp
 	}
 	cppar := tr.cloneProofNode(org.parent)
-
+	lowerbalance := org.Data.NodeBalance
+	upperbalance := cppar.Data.NodeBalance
 	for i, c := range org.parent.Children {
 		if c == nil {
 			continue
@@ -296,7 +298,19 @@ func (tr *Tree) TracePathToRoot(org *Node, cp *Node) *Node {
 			cppar.Children = append(cppar.Children, cp)
 			cp.parent = cppar
 		} else {
+			siblingbalance := 0
+			if tr.BalanceStrategy == Max {
+				if upperbalance == lowerbalance {
+					siblingbalance = 0
+				} else {
+					siblingbalance = upperbalance - lowerbalance
+				}
+			} else {
+				siblingbalance = c.Data.NodeBalance
+			}
+
 			cc := tr.cloneProofNode(c)
+			cc.Data.NodeBalance = siblingbalance
 			cppar.Children = append(cppar.Children, cc)
 			cc.isLeaf = true
 			cc.parent = cppar

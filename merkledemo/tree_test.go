@@ -27,3 +27,14 @@ func TestVisID(t *testing.T) {
 	}
 
 }
+
+func TestProof(t *testing.T) {
+	leaves := append(AliceToHarry, AliceToHarry...)
+	tree := NewTree(sha256.New(), leaves, 2, Sum)
+	leafId := "Bob"
+	ptree, err := tree.GetProof(leafId)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(ptree)
+}

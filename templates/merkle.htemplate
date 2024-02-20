@@ -49,8 +49,9 @@
 
 </style>
 
-{{template "emodal" .}}
+{{template "emodal_edit" .}}
 {{template "sha256" .}}
+{{template "selectact" .}}
 
 
 <div>
@@ -109,6 +110,70 @@
 
 {{with .BodyData}}{{with .DisplayTree}}
 <script type="text/javascript">
+
+function calculateHash(nodeId) {
+   if (nodeId !== undefined) {
+        const node = nodes.get(nodeId)
+        console.log("userId: " + node.userId)
+        console.log("balance: " + node.balance)
+        console.log("Claimed hash: "+ node.hash)
+        data.edges.forEach(edge => {
+            if(edge.to === nodeId && data.nodes.get(edge.from)){
+              console.log(edge.from)
+           }
+        });
+        var tohash; 
+        if (node.isLeaf) {
+          tohash = encoder.encode( node.userId + node.balance);
+        } else {
+            console.log({{.BalanceStrategy}})
+            switch({{.BalanceStrategy}}) {
+              case "Sum":
+                var sum = 0;
+                var hash = "";
+                data.edges.forEach(edge => {
+                   if(edge.to === nodeId && data.nodes.get(edge.from)){
+                     sum += +nodes.get(edge.from).balance;
+                     hash = concatenateArrays(hash, hexToBytes(nodes.get(edge.from).hash));
+                   }
+                 });
+                console.log("hashing together " +  bytesToHex(hash) + " " + sum);
+                tohash =  concatenateArrays(hash, encode(sum));
+                break;
+              case "None":
+                console.log(0);
+                break;
+              case "Max":
+                var sum = 0;
+                var hash = "";
+                data.edges.forEach(edge => {
+                   if(edge.to === nodeId && data.nodes.get(edge.from)){
+                     if (sum < +nodes.get(edge.from).balance) {
+                      sum = +nodes.get(edge.from).balance
+                     };
+                     hash = concatenateArrays(hash, hexToBytes(nodes.get(edge.from).hash));
+                   }
+                 });
+                console.log("hashing together " +  bytesToHex(hash) + " " + sum);
+                tohash =  concatenateArrays(hash, encode(sum));
+                break;
+              default:
+                console.log("Unknown");
+            }
+        }
+        sha256(tohash)
+           .then(hash => {
+             console.log('SHA-256 hash:', hash);
+             node.calcHash = hash;
+            })
+           .catch(error => {
+             console.error('Error calculating hash:', error);
+            });
+      }
+}
+
+
+
 // create an array with nodes
 var nodes = new vis.DataSet(
   {{.VisNet.Nodes}}
@@ -180,61 +245,18 @@ var network = new vis.Network(container, data, options);
     network.on('doubleClick', (event) => {
       const nodeId = event.nodes[0];
       if (nodeId !== undefined) {
-        openEditModal(nodeId);
+        showSelAct(nodeId);
       }
     });
 
     network.on('click', (event) => {
       const nodeId = event.nodes[0];
-      if (nodeId !== undefined) {
-        const node = nodes.get(nodeId)
-        console.log("Claimed hash: "+ node.hash)
-        data.edges.forEach(edge => {
-            if(edge.to === nodeId && data.nodes.get(edge.from)){
-              console.log(edge.from)
-           }
-        });
-        var tohash; 
-        if (node.isLeaf) {
-          tohash = encoder.encode( node.userId + node.balance);
-        } else {
-            console.log({{.BalanceStrategy}})
-            switch({{.BalanceStrategy}}) {
-              case "Sum":
-                console.log(1);
-                var sum = 0;
-                var hash = "";
-                data.edges.forEach(edge => {
-                   if(edge.to === nodeId && data.nodes.get(edge.from)){
-                     sum += nodes.get(edge.from).balance;
-                     hash = concatenateArrays(hash, hexToBytes(nodes.get(edge.from).hash));
-                   }
-                 });
-                tohash =  concatenateArrays(hash, encode(sum));
-                break;
-              case "None":
-                console.log(0);
-                break;
-              case "Max":
-                console.log(2);
-                break;
-              default:
-                console.log("Unknown");
-            }
-        }
-        sha256(tohash)
-           .then(hash => {
-             console.log('SHA-256 hash:', hash);
-            })
-           .catch(error => {
-             console.error('Error calculating hash:', error);
-            });
-      }
+      calculateHash(nodeId);
      
       
     });
 
-
+{{/*
 network.on("selectNode", function (params) {
   var selectedNodeId = params.nodes[0];
   var node = network.body.nodes[selectedNodeId];
@@ -245,7 +267,8 @@ network.on("selectNode", function (params) {
     }
   });
 });
-
+*/}}
+{{/*
 network.on("deselectNode", function (params) {
   var deselectedNodeId = params.previousSelection.nodes[0];
   var node = network.body.nodes[deselectedNodeId];
@@ -256,40 +279,12 @@ network.on("deselectNode", function (params) {
     }
   });
 });
+*/}}
 
+   
+    
 
-    // Function to open the edit modal
-    function openEditModal(nodeId) {
-      const node = nodes.get(nodeId);
-      if (!node.isLeaf) {
-        return;
-      }
-      document.getElementById('newUserId').value = node.userId;
-       document.getElementById('newBalance').value = node.balance;
-       document.getElementById('changeleafid').value = nodeId;
-      document.getElementById('editModal').style.display = 'block';
-      
-    }
-
-    // Function to close the edit modal
-    function closeEditModal() {
-      document.getElementById('editModal').style.display = 'none';
-    }
-
-    // Function to save the new label and update the node
-    function saveNewLabel() {
-      const nodeId = network.getSelectedNodes()[0];
-      var newLabel = document.getElementById('newUserId').value;
-      newLabel += ': ';
-      newLabel += document.getElementById('newBalance').value;
-      newLabel += '\n';
-
-      if (nodeId !== undefined) {
-        nodes.update({ id: nodeId, label: newLabel });
-        closeEditModal();
-      }
-    }
-
+    
 
 
 </script>

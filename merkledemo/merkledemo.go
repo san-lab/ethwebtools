@@ -60,6 +60,15 @@ func CallMerkleDemo(r *http.Request, rdata *templates.RenderData) {
 	mdat.Tree = NewTree(sha256.New(), leafdata, mdat.Branchcount, mdat.Strategy)
 	mdat.DisplayTree = mdat.Tree
 	//fmt.Println(mdat)
+	leafId := r.FormValue("leafid")
+	if action == "Proof" && len(leafId) > 0 {
+		ptree, err := mdat.Tree.GetProof(leafId)
+		if err != nil {
+			fmt.Println(err)
+		}
+		mdat.DisplayTree = ptree
+	}
+
 	rdata.BodyData = mdat
 }
 
