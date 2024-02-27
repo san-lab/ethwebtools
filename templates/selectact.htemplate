@@ -49,7 +49,7 @@
      <td>User:</td><td><input type="text" id="sUserId" name="newUserId"></td>
     </tr>
     <tr>
-      <td>Balance:</td><td><input type="text" id="sBalance"></td>
+      <td>Balance:</td><td><input type="text" id="sBalance"><span id='dueBalance'></span></td>
     </tr>
 <tr>
       <td >Claimed hash:</td><td id="clHash"></td>
@@ -66,12 +66,16 @@
         <td>
         <button class="btn" onclick="update2()">Save</button>
          </td>
+        <td>
+        <button class="btn" onclick="recalculate()">Recalc node</button>
+         </td>
+
           <td>
         <form method="POST">
         <button class="btn" onclick="submitAction()">Get Proof</button>
         <input type="hidden" name="action" value="Proof"/>
         <input type="hidden" name="leafid" id="leafid"/>
-         <input type="hidden" name="strategy" value="{{.BodyData.Strategy}}"/>
+         <input type="hidden" id="strategy" name="strategy" />
          </form>  
          </td>
            <td>
@@ -83,30 +87,72 @@
 </div>
 
 <script>
+async function recalculate() {
+  const nodeId = network.getSelectedNodes()[0];
+  const node = nodes.get(nodeId);
+  const recres = await calculateSumAndHash(nodeId);
+  console.log("setting ", nodeId," to", node.calcHash)
+  node.hash = recres.hash;
+  node.balance = recres.sum;
+  updateVisNode(node);
+  console.log(node);
+  fillModal(nodeId);
+}
+
+
+//Just fill the ui fields
+async function fillModal(nodeId) {
+  const node = nodes.get(nodeId);
+  if (nodeId===undefined ) {
+    return;
+  }
+  const modal = document.getElementById('nodeModal');
+  const header = document.getElementById('selActHeader');
+        header.textContent = `Node ${nodeId}`; 
+  const bal = document.getElementById('sBalance');
+        let edgc = network.getConnectedEdges(nodeId, 'to').length;
+        bal.readOnly = (edgc > 1); //this is ugly!
+        bal.value = node.balance;
+  const uid =  document.getElementById('sUserId');
+       uid.value = node.userId;
+  const clhash = document.getElementById('clHash');
+       clHash.innerHTML = `${node.hash}`;
+  const cahash = document.getElementById('caHash');
+        const res = await calculateSumAndHash(nodeId);
+        cahash.innerHTML = `${res.hash}`;
+        if (node.hash!==res.hash) {
+            cahash.style.color = 'red';
+       } else {
+            cahash.style.color = 'green';
+       }
+  const due = document.getElementById('dueBalance');
+      if (res.sum != node.balance) {
+        due.innerHTML = `(sholud be: ${res.sum})`;
+        
+        
+      } else {
+        due.innerHTML = "";
+      }
+        
+  const leafid = document.getElementById('leafid');
+        leafid.value = node.id;
+
+}
+
+function checkNode(node) {
+  const isLeaf = (network.getConnectedEdges(node.id).length <2);
+ // console.log(node.id, "is leaf: ", isLeaf);
+ 
+
+}
+
+var strategyVar = "Sum";
 var selNodeId;
-    function showSelAct(nodeId) {
+async function showSelAct(nodeId) {
+        const modal = document.getElementById('nodeModal');
         selNodeId = nodeId;
         const node = nodes.get(nodeId);
-        const modal = document.getElementById('nodeModal');
-        const header = document.getElementById('selActHeader');
-        header.textContent = `Node ${nodeId}`; 
-        const bal = document.getElementById('sBalance');
-        bal.value = node.balance;
-        const uid =  document.getElementById('sUserId');
-       uid.value = node.userId;
-       const clhash = document.getElementById('clHash');
-       clHash.innerHTML = `${node.hash}`;
-        const cahash = document.getElementById('caHash');
-       caHash.innerHTML = `${node.calcHash}`;
-       if (node.hash!==node.calcHash) {
-            caHash.style.color = 'red';
-       } else {
-            caHash.style.color = 'green';
-       }
-       const leafid = document.getElementById("leafid");
-       leafid.value = node.userId;
-       
-       
+        await fillModal(nodeId); 
         modal.style.display = 'block';
     }
 
@@ -127,29 +173,32 @@ var selNodeId;
     }
 
 
+      
     function update2() {
-        hideModal();
       const nodeId = network.getSelectedNodes()[0];
       const newUserId = document.getElementById('sUserId').value;
       const newBalance = document.getElementById('sBalance').value;
-      let nlabel = "";
-      if (newUserId !== null && newUserId.length > 0) {
-          
-        nlabel += newUserId+`: `;
-      }
-      nlabel += `<b>$`+newBalance+`</b>\n`;
-      nlabel += shortenHash( nodes.get(nodeId).hash);
+      const node = nodes.get(nodeId);
+      node.userId = newUserId;
+      node.balance = newBalance;
 
+      const nlabel = newNodeLabel(node);
+      console.log(nlabel);
 
       
       if (nodeId !== undefined) {
-        const label = newUserId
-         nodes.update({ id: nodeId, label: nlabel , balance: newBalance, userId: newUserId});
-         calculateHash(nodeId);
-        
+        nodes.update({ id: nodeId, label: nlabel});
+               
       }
+      checkNode(node);
+      showSelAct(nodeId);
     }
 
+function isEditBoxVisible() {
+  const box = document.getElementById("nodeModal");
+  const style = window.getComputedStyle(box);
+  return style.display !== 'none' && style.visibility !== 'hidden';
+}
 
 </script>
 

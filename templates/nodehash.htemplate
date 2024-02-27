@@ -1,0 +1,83 @@
+{{define "nodehash"}}
+<script>
+async function calculateSumAndHash(nodeId) {
+  const result = {};
+  result.sum = 0;
+  result.hash = "xyz";
+
+   if (nodeId === undefined) {
+    console.log("nodeId is undefined");
+    return result; 
+  }
+      const node = nodes.get(nodeId);
+       // data.edges.forEach(edge => {
+       //     if(edge.to === nodeId && data.nodes.get(edge.from)){
+       //       console.log(edge.from)
+       //    }
+       // });
+        var tohash; 
+        var sum = 0;
+        if (node.isLeaf) {
+          tohash = encoder.encode( node.userId + node.balance);
+          sum = +node.balance;
+        } else {
+        
+            console.log(strategyVar);
+            switch(strategyVar) {
+              case "Sum":
+                
+                var hash = "";
+                data.edges.forEach(edge => {
+                   if(edge.to === nodeId && data.nodes.get(edge.from)){
+                     sum += +nodes.get(edge.from).balance;
+                     hash = concatenateArrays(hash, hexToBytes(nodes.get(edge.from).hash));
+                   }
+                 });
+               // console.log("hashing together " +  bytesToHex(hash) + " " + sum);
+                tohash =  concatenateArrays(hash, encode(sum));
+                break;
+              case "None":
+                console.log(0);
+                break;
+              case "Max":
+                var hash = [];
+                data.edges.forEach(edge => {
+                   if(edge.to === nodeId && data.nodes.get(edge.from)){
+                     if (sum < +nodes.get(edge.from).balance) {
+                      sum = +nodes.get(edge.from).balance
+                     };
+                     hash = concatenateArrays(hash, hexToBytes(nodes.get(edge.from).hash));
+                   }
+                 });
+                console.log("hashing together " +  bytesToHex(hash) + " " + sum);
+                tohash =  concatenateArrays(hash, encode(sum));
+                break;
+              case "Both":
+                tohash = [];
+                data.edges.forEach(edge => {
+                   if(edge.to === nodeId && data.nodes.get(edge.from)){
+                     tohash = concatenateArrays(tohash, encode(nodes.get(edge.from).balance));
+                     tohash = concatenateArrays(tohash, hexToBytes(nodes.get(edge.from).hash));
+                     sum += +nodes.get(edge.from).balance;
+                   }
+                 });
+                 break;
+              default:
+                console.log("Unknown", strategyVar);
+                tohash = new Uint8Array(0);
+            }
+           
+        }
+        const calcHash = await sha256(tohash);
+          console.log('SHA-256 hash:', calcHash);
+          node.calcHash = result;
+          result.sum = sum;
+          result.hash = calcHash;
+          return result;
+        
+       
+     
+}
+</script>
+{{end}}
+

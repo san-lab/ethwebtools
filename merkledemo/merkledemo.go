@@ -62,7 +62,8 @@ func CallMerkleDemo(r *http.Request, rdata *templates.RenderData) {
 	//fmt.Println(mdat)
 	leafId := r.FormValue("leafid")
 	if action == "Proof" && len(leafId) > 0 {
-		ptree, err := mdat.Tree.GetProof(leafId)
+		idx := mdat.Tree.VisIDToIdx(leafId)
+		ptree, err := mdat.Tree.GetProof(mdat.Tree.Leaves[idx].Data.NodeID)
 		if err != nil {
 			fmt.Println(err)
 		}

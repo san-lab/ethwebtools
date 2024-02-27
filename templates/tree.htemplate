@@ -1,0 +1,132 @@
+{{define "tree"}}
+{{template "visheader" .HeaderData}}
+        {{with .Error}}Error: {{.}}{{end}}
+
+
+{{template "selectact" .}}
+{{template "sha256" .}}
+{{template "nodehash" .}}
+<style>
+ #graph {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 1780px;
+      height: 700px;
+
+      z-index: 1;
+    }
+
+
+</style>
+
+<div id="graph">
+      </div>
+
+
+
+
+<script>
+const leaves = [{}, {}, {}, {}, {}, {}];
+var nodes = new vis.DataSet([]);
+var edges = new vis.DataSet([]);
+
+function TreeFromLeaves(leaves, n) {
+    
+    for (let i = 0; i < leaves.length; i++) {
+        leaves[i].id = i;
+        leaves[i].isLeaf=true;
+        nodes.add(leaves[i]);
+       }
+    NextLevel(leaves,n);
+}
+
+function NextLevel(lowerlevel, n) {
+    if (lowerlevel.length==0) {
+        return;
+    }
+    var nextLevel = [];
+    for (let i = 0; i < lowerlevel.length; i += n) {
+     const group = lowerlevel.slice(i, i + n);
+     nextLevel = [...nextLevel, ParentFromChildren(group)];
+    }
+    if (nextLevel.length > 1) {
+        NextLevel(nextLevel, n);
+    }
+
+}
+
+
+function ParentFromChildren(children) {
+   
+    const Parent = {};
+    Parent["id"] = "";
+
+     for (let i = 0; i < children.length; i++) {
+               Parent.id += children[i].id + "C";
+     }
+   
+    for (let i = 0; i < children.length; i++) {
+        edge = {};
+        edge["from"] = children[i].id;
+        edge["to"] = Parent.id;
+        edges.add( edge);
+ 
+    }
+      nodes.add(Parent);
+    return Parent;
+}
+
+
+TreeFromLeaves(leaves, 3);
+console.log(nodes);
+console.log(edges);
+
+
+
+<!---------------------------->
+// create a network
+var container = document.getElementById("graph");
+var data = {
+  nodes: nodes,
+  edges: edges,
+};
+
+var options = {
+  layout: {
+    hierarchical: {
+      direction: "UD",
+      sortMethod: "directed",
+    },
+  },
+  edges: {
+    arrows: "to",
+  },
+   nodes: {
+    shape: "box",
+    font: {
+        // required: enables displaying <b>text</b> in the label as bold text
+        multi: 'html',
+        // optional: use this if you want to specify the font of bold text
+        //bold: '16px arial black'
+    }
+
+  },
+ 
+};
+
+var network = new vis.Network(container, data, options);
+
+// Event listener for double-click on a node
+network.on('doubleClick', (event) => {
+      const nodeId = event.nodes[0];
+      if (nodeId !== undefined) {
+        showSelAct(nodeId);
+      }
+    });
+
+    
+
+</script>
+
+{{end}}

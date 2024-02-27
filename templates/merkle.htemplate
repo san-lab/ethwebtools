@@ -68,6 +68,9 @@
       <option value="Both" {{if eq . "Both"}}selected{{end}}>Both</option>
       <option value="None" {{if eq . "None"}}selected{{end}}>None</option>
     </select>
+    <script>
+    strategyVar = {{.}};
+    </script>
       {{end}}
     {{end}}
     </td>
@@ -109,70 +112,12 @@
   
 
 {{with .BodyData}}{{with .DisplayTree}}
-<script type="text/javascript">
-
-function calculateHash(nodeId) {
-   if (nodeId !== undefined) {
-        const node = nodes.get(nodeId)
-        console.log("userId: " + node.userId)
-        console.log("balance: " + node.balance)
-        console.log("Claimed hash: "+ node.hash)
-        data.edges.forEach(edge => {
-            if(edge.to === nodeId && data.nodes.get(edge.from)){
-              console.log(edge.from)
-           }
-        });
-        var tohash; 
-        if (node.isLeaf) {
-          tohash = encoder.encode( node.userId + node.balance);
-        } else {
-            console.log({{.BalanceStrategy}})
-            switch({{.BalanceStrategy}}) {
-              case "Sum":
-                var sum = 0;
-                var hash = "";
-                data.edges.forEach(edge => {
-                   if(edge.to === nodeId && data.nodes.get(edge.from)){
-                     sum += +nodes.get(edge.from).balance;
-                     hash = concatenateArrays(hash, hexToBytes(nodes.get(edge.from).hash));
-                   }
-                 });
-                console.log("hashing together " +  bytesToHex(hash) + " " + sum);
-                tohash =  concatenateArrays(hash, encode(sum));
-                break;
-              case "None":
-                console.log(0);
-                break;
-              case "Max":
-                var sum = 0;
-                var hash = "";
-                data.edges.forEach(edge => {
-                   if(edge.to === nodeId && data.nodes.get(edge.from)){
-                     if (sum < +nodes.get(edge.from).balance) {
-                      sum = +nodes.get(edge.from).balance
-                     };
-                     hash = concatenateArrays(hash, hexToBytes(nodes.get(edge.from).hash));
-                   }
-                 });
-                console.log("hashing together " +  bytesToHex(hash) + " " + sum);
-                tohash =  concatenateArrays(hash, encode(sum));
-                break;
-              default:
-                console.log("Unknown");
-            }
-        }
-        sha256(tohash)
-           .then(hash => {
-             console.log('SHA-256 hash:', hash);
-             node.calcHash = hash;
-            })
-           .catch(error => {
-             console.error('Error calculating hash:', error);
-            });
-      }
-}
-
-
+{{template "nodehash" .}}
+<script>
+const leafColor = "#33ff99";
+const nodeColor = "#fee9b4";
+const rootColor = "#ffA050";
+const badColor = '#FFCCBB';
 
 // create an array with nodes
 var nodes = new vis.DataSet(
@@ -251,9 +196,14 @@ var network = new vis.Network(container, data, options);
 
     network.on('click', (event) => {
       const nodeId = event.nodes[0];
-      calculateHash(nodeId);
-     
-      
+
+
+      if  (isEditBoxVisible()) {
+         if (nodeId !== undefined) {
+           showSelAct(nodeId);
+        }
+      }
+        
     });
 
 {{/*
@@ -283,8 +233,22 @@ network.on("deselectNode", function (params) {
 
    
     
-
+function updateVisNode(node) {
+   nodes.update({id: node.id, label: newNodeLabel(node)});
+  
+}
     
+function newNodeLabel(node) {
+      let nlabel = "";
+      if (node.userId !== null && node.userId.length > 0) {
+          
+        nlabel += node.userId +`: `;
+      }
+      nlabel += `<b>$`+node.balance+`</b>\n`;
+      nlabel += shortenHash(node.hash);
+      return nlabel;
+        
+}
 
 
 </script>

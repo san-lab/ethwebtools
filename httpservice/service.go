@@ -61,6 +61,9 @@ func (lhh *LilHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			merkledemo.CallMerkleDemo(r, rdata)
 		case "loadtemplates":
 			lhh.renderer.LoadTemplates()
+		case "treetest":
+			rdata.TemplateName = "tree"
+			rdata.BodyData = struct{ Strategy string }{Strategy: "Sum"}
 		}
 		//TODO: dispatch
 	}
